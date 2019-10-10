@@ -50,7 +50,7 @@ def get_random_prime( numBits ):
 
 def generate_prime_pairs( numBits ):
     """
-        Genarating the pairs of random p, q, p1, q1.
+        Generating the pairs of random p, q, p1, q1.
                         p*q <= p1*q1
     """
     p = get_random_prime( numBits )
