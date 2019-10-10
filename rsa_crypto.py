@@ -36,27 +36,27 @@ def miller_rabin_test( p, k=10 ):
                 continue
     return False
 
-get_random_n = lambda b:random.getrandbits( b ) | 1 << b - 1
+get_random_n = lambda numBits:random.getrandbits( numBits ) | 1 << numBits - 1
 
-def get_random_prime( b ):
-    """ Getting the strong prime number. """
-    x = get_random_n( b )
-    while miller_rabin_test( x ) == False:
-        x = get_random_n( b )
+def get_random_prime( numBits ):
+    """ Generating strong prime """
+    x = get_random_n( numBits )
+    while not miller_rabin_test( x ):
+        x = get_random_n( numBits )
     i = 1
-    while miller_rabin_test( 2*i*x + 1 ) == False:
+    while not miller_rabin_test( 2*i*x + 1 ):
         i += 1
     return 2*i*x + 1
 
-def generate_prime_pairs( b ):
+def generate_prime_pairs( numBits ):
     """
         Genarating the pairs of random p, q, p1, q1.
                         p*q <= p1*q1
     """
-    p = get_random_prime( b )
-    q = get_random_prime( b )
-    p1 = get_random_prime( b )
-    q1 = get_random_prime( b )
+    p = get_random_prime( numBits )
+    q = get_random_prime( numBits )
+    p1 = get_random_prime( numBits )
+    q1 = get_random_prime( numBits )
     
     if p*q > p1*q1:
         p, p1 = p1, p
@@ -64,7 +64,7 @@ def generate_prime_pairs( b ):
     return ( p, q, p1, q1 )
 
 def public_key( p, q ):
-    """ Counting the public key (n, e) """
+    """ Public key (n, e) determination """
     e = pow( 2, 16 ) + 1
     n = p*q
     return n, e
@@ -72,48 +72,43 @@ def public_key( p, q ):
 def find_inversed_element( a, m ):
     """ a*x == 1(mod m) """
     if a == 1:
-        return 1
+        return a
     return ( 1 - find_inversed_element( m % a, a ) * m ) // a + m
 
 def secret_key( p, q ):
-    """ Counting the 'd' value for secret key. """
+    """ Secret key 'd' value determination """
     fn = ( p-1 )*( q-1 )
-    d = find_inversed_element( pow( 2, 16 )+1, fn )
-    return d
+    return find_inversed_element( pow( 2, 16 )+1, fn )
 
 def encrypt( M, e, n ):
-    """ Function returning the encrypted message """
+    """ Function returning encrypted message """
     return pow( M, e, n )
 
 def decrypt( C, d, n ):
-    """ Function returning the decrypted message """
+    """ Function returning decrypted message """
     return pow( C, d, n )
 
 def sign( M, d, n ):
-    """ Returning 'S' """
+    """ Message signing """
     return pow( M, d, n )
 
 def verify( M, S, e, n ):
-    """ Checking the digital signature """
-    if M == pow( S, e, n ):
-        return True
-    else:
-        return False
+    """ Checking digital signature """
+    return M == pow( S, e, n )
 
 def send_key( k, n1, e1, d, n ):
     S = sign( k, d, n )
     k1 = encrypt( k, e1, n1 )
     S1 = encrypt( S, e1, n1 )
+
     return k1, S1
 
 def receive_key( d1, k1, S1, n1, n, e ):
     k = decrypt( k1, d1, n1 )
     S = decrypt( S1, d1, n1 )
     print( "Received value:", k )
-    if verify( k, S, e, n ) == True:
-        return True
-    else:
-        return False
+
+    return verify( k, S, e, n )
 
 print( "Starting encryption ..." )
 p = generate_prime_pairs( 256 )[ 0 ]
